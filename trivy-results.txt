@@ -10,7 +10,7 @@ Report Summary
 ├──────────────────────────────────────────────────────────────────────────────────┼────────────────┼───────────────────┤
 │ terraform/aws/db-app.tf                                                          │   terraform    │        13         │
 ├──────────────────────────────────────────────────────────────────────────────────┼────────────────┼───────────────────┤
-│ terraform/aws/ec2.tf                                                             │   terraform    │        20         │
+│ terraform/aws/ec2.tf                                                             │   terraform    │        19         │
 ├──────────────────────────────────────────────────────────────────────────────────┼────────────────┼───────────────────┤
 │ terraform/aws/ecr.tf                                                             │   terraform    │         3         │
 ├──────────────────────────────────────────────────────────────────────────────────┼────────────────┼───────────────────┤
@@ -139,7 +139,7 @@ See https://avd.aquasec.com/misconfig/aws-0028
  248 │ 
  249 │   vpc_security_group_ids = [
  250 │   "${aws_security_group.web-node.id}"]
- 251 └   subnet_id = "${aws_subnet.web_subnet.id}"
+ 251 └   subnet_id = aws_subnet.web_subnet.id
  ...   
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -221,7 +221,7 @@ See https://avd.aquasec.com/misconfig/aws-0104
  148     to_port           = 0
  149     protocol          = "-1"
  150 [   cidr_blocks       = ["0.0.0.0/0"]
- 151     security_group_id = "${aws_security_group.default.id}"
+ 151     security_group_id = aws_security_group.default.id
  152   }
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -243,7 +243,7 @@ See https://avd.aquasec.com/misconfig/aws-0124
  148 │   to_port           = 0
  149 │   protocol          = "-1"
  150 │   cidr_blocks       = ["0.0.0.0/0"]
- 151 │   security_group_id = "${aws_security_group.default.id}"
+ 151 │   security_group_id = aws_security_group.default.id
  152 └ }
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -287,7 +287,7 @@ See https://avd.aquasec.com/misconfig/aws-0131
  248 │ 
  249 │   vpc_security_group_ids = [
  250 │   "${aws_security_group.web-node.id}"]
- 251 └   subnet_id = "${aws_subnet.web_subnet.id}"
+ 251 └   subnet_id = aws_subnet.web_subnet.id
  ...   
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -399,8 +399,8 @@ See https://avd.aquasec.com/misconfig/aws-0345
 
 terraform/aws/ec2.tf (terraform)
 ================================
-Tests: 20 (SUCCESSES: 0, FAILURES: 20)
-Failures: 20 (UNKNOWN: 0, LOW: 6, MEDIUM: 1, HIGH: 11, CRITICAL: 2)
+Tests: 19 (SUCCESSES: 0, FAILURES: 19)
+Failures: 19 (UNKNOWN: 0, LOW: 6, MEDIUM: 1, HIGH: 11, CRITICAL: 1)
 
 AWS-0026 (HIGH): EBS volume is not encrypted.
 ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -461,36 +461,13 @@ See https://avd.aquasec.com/misconfig/aws-0028
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
    1 ┌ resource "aws_instance" "web_host" {
    2 │   # ec2 have plain text secrets in user data
-   3 │   ami           = "${var.ami}"
+   3 │   ami           = var.ami
    4 │   instance_type = "t2.nano"
    5 │ 
    6 │   vpc_security_group_ids = [
    7 │   "${aws_security_group.web-node.id}"]
-   8 │   subnet_id = "${aws_subnet.web_subnet.id}"
+   8 │   subnet_id = aws_subnet.web_subnet.id
    9 └   user_data = <<EOF
-  ..   
-───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-
-
-AWS-0029 (CRITICAL): Sensitive data found in instance user data: Check for AWS Access Key Id
-═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-EC2 instance data is used to pass start up information into the EC2 instance. This userdata must not contain access key credentials. Instead use an IAM Instance Profile assigned to the instance to grant access to other AWS Services.
-
-
-See https://avd.aquasec.com/misconfig/aws-0029
-───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
- terraform/aws/ec2.tf:9-19
-   via terraform/aws/ec2.tf:1-32 (aws_instance.web_host)
-───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-   1   resource "aws_instance" "web_host" {
-   .   
-   9 ┌   user_data = <<EOF
-  10 │ #! /bin/bash
-  11 │ sudo apt-get update
-  12 │ sudo apt-get install -y apache2
-  13 │ sudo systemctl start apache2
-  14 │ sudo systemctl enable apache2
-  15 └ export AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMAAA
   ..   
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -705,6 +682,31 @@ Simplifies auditing, debugging, and managing security groups.
 
 See https://avd.aquasec.com/misconfig/aws-0124
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ terraform/aws/ec2.tf:97-103
+   via terraform/aws/ec2.tf:77-115 (aws_security_group.web-node)
+───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  77   resource "aws_security_group" "web-node" {
+  ..   
+  97 ┌   egress {
+  98 │     from_port = 0
+  99 │     to_port   = 0
+ 100 │     protocol  = "-1"
+ 101 │     cidr_blocks = [
+ 102 │     "0.0.0.0/0"]
+ 103 └   }
+ ...   
+───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+AWS-0124 (LOW): Security group rule does not have a description.
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Security group rules should include a description for auditing purposes.
+
+Simplifies auditing, debugging, and managing security groups.
+
+
+See https://avd.aquasec.com/misconfig/aws-0124
+───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  terraform/aws/ec2.tf:90-96
    via terraform/aws/ec2.tf:77-115 (aws_security_group.web-node)
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -746,31 +748,6 @@ See https://avd.aquasec.com/misconfig/aws-0124
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 
-AWS-0124 (LOW): Security group rule does not have a description.
-═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-Security group rules should include a description for auditing purposes.
-
-Simplifies auditing, debugging, and managing security groups.
-
-
-See https://avd.aquasec.com/misconfig/aws-0124
-───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
- terraform/aws/ec2.tf:97-103
-   via terraform/aws/ec2.tf:77-115 (aws_security_group.web-node)
-───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  77   resource "aws_security_group" "web-node" {
-  ..   
-  97 ┌   egress {
-  98 │     from_port = 0
-  99 │     to_port   = 0
- 100 │     protocol  = "-1"
- 101 │     cidr_blocks = [
- 102 │     "0.0.0.0/0"]
- 103 └   }
- ...   
-───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-
-
 AWS-0131 (HIGH): Root block device is not encrypted.
 ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 Block devices should be encrypted to ensure sensitive data is held securely at rest.
@@ -782,12 +759,12 @@ See https://avd.aquasec.com/misconfig/aws-0131
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
    1 ┌ resource "aws_instance" "web_host" {
    2 │   # ec2 have plain text secrets in user data
-   3 │   ami           = "${var.ami}"
+   3 │   ami           = var.ami
    4 │   instance_type = "t2.nano"
    5 │ 
    6 │   vpc_security_group_ids = [
    7 │   "${aws_security_group.web-node.id}"]
-   8 │   subnet_id = "${aws_subnet.web_subnet.id}"
+   8 │   subnet_id = aws_subnet.web_subnet.id
    9 └   user_data = <<EOF
   ..   
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -867,7 +844,7 @@ See https://avd.aquasec.com/misconfig/aws-0030
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  terraform/aws/ecr.tf:1-18
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-   1 ┌ resource aws_ecr_repository "repository" {
+   1 ┌ resource "aws_ecr_repository" "repository" {
    2 │   name                 = "${local.resource_prefix.value}-repository"
    3 │   image_tag_mutability = "MUTABLE"
    4 │ 
@@ -891,7 +868,7 @@ See https://avd.aquasec.com/misconfig/aws-0031
  terraform/aws/ecr.tf:3
    via terraform/aws/ecr.tf:1-18 (aws_ecr_repository.repository)
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-   1   resource aws_ecr_repository "repository" {
+   1   resource "aws_ecr_repository" "repository" {
    .   
    3 [   image_tag_mutability = "MUTABLE"
   ..   
@@ -908,7 +885,7 @@ See https://avd.aquasec.com/misconfig/aws-0033
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  terraform/aws/ecr.tf:1-18
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-   1 ┌ resource aws_ecr_repository "repository" {
+   1 ┌ resource "aws_ecr_repository" "repository" {
    2 │   name                 = "${local.resource_prefix.value}-repository"
    3 │   image_tag_mutability = "MUTABLE"
    4 │ 
@@ -936,9 +913,9 @@ See https://avd.aquasec.com/misconfig/aws-0038
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  terraform/aws/eks.tf:118-141
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
- 118 ┌ resource aws_eks_cluster "eks_cluster" {
+ 118 ┌ resource "aws_eks_cluster" "eks_cluster" {
  119 │   name     = local.eks_name.value
- 120 │   role_arn = "${aws_iam_role.iam_for_eks.arn}"
+ 120 │   role_arn = aws_iam_role.iam_for_eks.arn
  121 │ 
  122 │   vpc_config {
  123 │     endpoint_private_access = true
@@ -958,9 +935,9 @@ See https://avd.aquasec.com/misconfig/aws-0038
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  terraform/aws/eks.tf:118-141
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
- 118 ┌ resource aws_eks_cluster "eks_cluster" {
+ 118 ┌ resource "aws_eks_cluster" "eks_cluster" {
  119 │   name     = local.eks_name.value
- 120 │   role_arn = "${aws_iam_role.iam_for_eks.arn}"
+ 120 │   role_arn = aws_iam_role.iam_for_eks.arn
  121 │ 
  122 │   vpc_config {
  123 │     endpoint_private_access = true
@@ -980,9 +957,9 @@ See https://avd.aquasec.com/misconfig/aws-0038
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  terraform/aws/eks.tf:118-141
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
- 118 ┌ resource aws_eks_cluster "eks_cluster" {
+ 118 ┌ resource "aws_eks_cluster" "eks_cluster" {
  119 │   name     = local.eks_name.value
- 120 │   role_arn = "${aws_iam_role.iam_for_eks.arn}"
+ 120 │   role_arn = aws_iam_role.iam_for_eks.arn
  121 │ 
  122 │   vpc_config {
  123 │     endpoint_private_access = true
@@ -1002,9 +979,9 @@ See https://avd.aquasec.com/misconfig/aws-0038
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  terraform/aws/eks.tf:118-141
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
- 118 ┌ resource aws_eks_cluster "eks_cluster" {
+ 118 ┌ resource "aws_eks_cluster" "eks_cluster" {
  119 │   name     = local.eks_name.value
- 120 │   role_arn = "${aws_iam_role.iam_for_eks.arn}"
+ 120 │   role_arn = aws_iam_role.iam_for_eks.arn
  121 │ 
  122 │   vpc_config {
  123 │     endpoint_private_access = true
@@ -1024,9 +1001,9 @@ See https://avd.aquasec.com/misconfig/aws-0038
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  terraform/aws/eks.tf:118-141
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
- 118 ┌ resource aws_eks_cluster "eks_cluster" {
+ 118 ┌ resource "aws_eks_cluster" "eks_cluster" {
  119 │   name     = local.eks_name.value
- 120 │   role_arn = "${aws_iam_role.iam_for_eks.arn}"
+ 120 │   role_arn = aws_iam_role.iam_for_eks.arn
  121 │ 
  122 │   vpc_config {
  123 │     endpoint_private_access = true
@@ -1046,9 +1023,9 @@ See https://avd.aquasec.com/misconfig/aws-0039
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  terraform/aws/eks.tf:118-141
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
- 118 ┌ resource aws_eks_cluster "eks_cluster" {
+ 118 ┌ resource "aws_eks_cluster" "eks_cluster" {
  119 │   name     = local.eks_name.value
- 120 │   role_arn = "${aws_iam_role.iam_for_eks.arn}"
+ 120 │   role_arn = aws_iam_role.iam_for_eks.arn
  121 │ 
  122 │   vpc_config {
  123 │     endpoint_private_access = true
@@ -1069,7 +1046,7 @@ See https://avd.aquasec.com/misconfig/aws-0040
  terraform/aws/eks.tf:122-125
    via terraform/aws/eks.tf:118-141 (aws_eks_cluster.eks_cluster)
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
- 118   resource aws_eks_cluster "eks_cluster" {
+ 118   resource "aws_eks_cluster" "eks_cluster" {
  ...   
  122 ┌   vpc_config {
  123 │     endpoint_private_access = true
@@ -1090,7 +1067,7 @@ See https://avd.aquasec.com/misconfig/aws-0041
  terraform/aws/eks.tf:122-125
    via terraform/aws/eks.tf:118-141 (aws_eks_cluster.eks_cluster)
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
- 118   resource aws_eks_cluster "eks_cluster" {
+ 118   resource "aws_eks_cluster" "eks_cluster" {
  ...   
  122 ┌   vpc_config {
  123 │     endpoint_private_access = true
@@ -1111,7 +1088,7 @@ See https://avd.aquasec.com/misconfig/aws-0164
  terraform/aws/eks.tf:66
    via terraform/aws/eks.tf:62-88 (aws_subnet.eks_subnet1)
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  62   resource aws_subnet "eks_subnet1" {
+  62   resource "aws_subnet" "eks_subnet1" {
   ..   
   66 [   map_public_ip_on_launch = true
   ..   
@@ -1129,7 +1106,7 @@ See https://avd.aquasec.com/misconfig/aws-0164
  terraform/aws/eks.tf:94
    via terraform/aws/eks.tf:90-116 (aws_subnet.eks_subnet2)
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  90   resource aws_subnet "eks_subnet2" {
+  90   resource "aws_subnet" "eks_subnet2" {
   ..   
   94 [   map_public_ip_on_launch = true
  ...   
@@ -1146,7 +1123,7 @@ See https://avd.aquasec.com/misconfig/aws-0178
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  terraform/aws/eks.tf:44-60
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  44 ┌ resource aws_vpc "eks_vpc" {
+  44 ┌ resource "aws_vpc" "eks_vpc" {
   45 │   cidr_block           = "10.10.0.0/16"
   46 │   enable_dns_hostnames = true
   47 │   enable_dns_support   = true
@@ -1382,10 +1359,10 @@ See https://avd.aquasec.com/misconfig/aws-0066
   33 │   # lambda have plain text secrets in environment variables
   34 │   filename      = "resources/lambda_function_payload.zip"
   35 │   function_name = "${local.resource_prefix.value}-analysis"
-  36 │   role          = "${aws_iam_role.iam_for_lambda.arn}"
+  36 │   role          = aws_iam_role.iam_for_lambda.arn
   37 │   handler       = "exports.test"
   38 │ 
-  39 │   source_code_hash = "${filebase64sha256("resources/lambda_function_payload.zip")}"
+  39 │   source_code_hash = filebase64sha256("resources/lambda_function_payload.zip")
   40 └ 
   ..   
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -1964,7 +1941,7 @@ See https://avd.aquasec.com/misconfig/aws-0086
   94 │     enabled = true
   95 │   }
   96 │   logging {
-  97 └     target_bucket = "${aws_s3_bucket.logs.id}"
+  97 └     target_bucket = aws_s3_bucket.logs.id
   ..   
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -2074,7 +2051,7 @@ See https://avd.aquasec.com/misconfig/aws-0087
   94 │     enabled = true
   95 │   }
   96 │   logging {
-  97 └     target_bucket = "${aws_s3_bucket.logs.id}"
+  97 └     target_bucket = aws_s3_bucket.logs.id
   ..   
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -2303,7 +2280,7 @@ See https://avd.aquasec.com/misconfig/aws-0091
   94 │     enabled = true
   95 │   }
   96 │   logging {
-  97 └     target_bucket = "${aws_s3_bucket.logs.id}"
+  97 └     target_bucket = aws_s3_bucket.logs.id
   ..   
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -2413,7 +2390,7 @@ See https://avd.aquasec.com/misconfig/aws-0093
   94 │     enabled = true
   95 │   }
   96 │   logging {
-  97 └     target_bucket = "${aws_s3_bucket.logs.id}"
+  97 └     target_bucket = aws_s3_bucket.logs.id
   ..   
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -2523,7 +2500,7 @@ See https://avd.aquasec.com/misconfig/aws-0094
   94 │     enabled = true
   95 │   }
   96 │   logging {
-  97 └     target_bucket = "${aws_s3_bucket.logs.id}"
+  97 └     target_bucket = aws_s3_bucket.logs.id
   ..   
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -2635,7 +2612,7 @@ See https://avd.aquasec.com/misconfig/aws-0132
   94 │     enabled = true
   95 │   }
   96 │   logging {
-  97 └     target_bucket = "${aws_s3_bucket.logs.id}"
+  97 └     target_bucket = aws_s3_bucket.logs.id
   ..   
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -2704,7 +2681,7 @@ See https://avd.aquasec.com/misconfig/azu-0040
     via terraform/azure/aks.tf:14-21 (addon_profile)
      via terraform/azure/aks.tf:1-35 (azurerm_kubernetes_cluster.k8s_cluster)
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-   1   resource azurerm_kubernetes_cluster "k8s_cluster" {
+   1   resource "azurerm_kubernetes_cluster" "k8s_cluster" {
    .   
   16 [       enabled = false
   ..   
@@ -2721,7 +2698,7 @@ See https://avd.aquasec.com/misconfig/azu-0041
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  terraform/azure/aks.tf:1-35
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-   1 ┌ resource azurerm_kubernetes_cluster "k8s_cluster" {
+   1 ┌ resource "azurerm_kubernetes_cluster" "k8s_cluster" {
    2 │   dns_prefix          = "terragoat-${var.environment}"
    3 │   location            = var.location
    4 │   name                = "terragoat-aks-${var.environment}"
@@ -2745,7 +2722,7 @@ See https://avd.aquasec.com/misconfig/azu-0042
    via terraform/azure/aks.tf:22-24 (role_based_access_control)
     via terraform/azure/aks.tf:1-35 (azurerm_kubernetes_cluster.k8s_cluster)
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-   1   resource azurerm_kubernetes_cluster "k8s_cluster" {
+   1   resource "azurerm_kubernetes_cluster" "k8s_cluster" {
    .   
   23 [     enabled = false
   ..   
@@ -2762,7 +2739,7 @@ See https://avd.aquasec.com/misconfig/azu-0043
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  terraform/azure/aks.tf:1-35
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-   1 ┌ resource azurerm_kubernetes_cluster "k8s_cluster" {
+   1 ┌ resource "azurerm_kubernetes_cluster" "k8s_cluster" {
    2 │   dns_prefix          = "terragoat-${var.environment}"
    3 │   location            = var.location
    4 │   name                = "terragoat-aks-${var.environment}"
@@ -2784,7 +2761,7 @@ See https://avd.aquasec.com/misconfig/azu-0065
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  terraform/azure/aks.tf:1-35
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-   1 ┌ resource azurerm_kubernetes_cluster "k8s_cluster" {
+   1 ┌ resource "azurerm_kubernetes_cluster" "k8s_cluster" {
    2 │   dns_prefix          = "terragoat-${var.environment}"
    3 │   location            = var.location
    4 │   name                = "terragoat-aks-${var.environment}"
@@ -2806,7 +2783,7 @@ See https://avd.aquasec.com/misconfig/azu-0066
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  terraform/azure/aks.tf:1-35
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-   1 ┌ resource azurerm_kubernetes_cluster "k8s_cluster" {
+   1 ┌ resource "azurerm_kubernetes_cluster" "k8s_cluster" {
    2 │   dns_prefix          = "terragoat-${var.environment}"
    3 │   location            = var.location
    4 │   name                = "terragoat-aks-${var.environment}"
@@ -2828,7 +2805,7 @@ See https://avd.aquasec.com/misconfig/azu-0067
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  terraform/azure/aks.tf:1-35
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-   1 ┌ resource azurerm_kubernetes_cluster "k8s_cluster" {
+   1 ┌ resource "azurerm_kubernetes_cluster" "k8s_cluster" {
    2 │   dns_prefix          = "terragoat-${var.environment}"
    3 │   location            = var.location
    4 │   name                = "terragoat-aks-${var.environment}"
@@ -2856,7 +2833,7 @@ See https://avd.aquasec.com/misconfig/azu-0001
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  terraform/azure/app_service.tf:22-41
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  22 ┌ resource azurerm_app_service "app-service1" {
+  22 ┌ resource "azurerm_app_service" "app-service1" {
   23 │   app_service_plan_id = azurerm_app_service_plan.example.id
   24 │   location            = var.location
   25 │   name                = "terragoat-app-service-${var.environment}${random_integer.rnd_int.result}"
@@ -2878,7 +2855,7 @@ See https://avd.aquasec.com/misconfig/azu-0001
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  terraform/azure/app_service.tf:43-63
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  43 ┌ resource azurerm_app_service "app-service2" {
+  43 ┌ resource "azurerm_app_service" "app-service2" {
   44 │   app_service_plan_id = azurerm_app_service_plan.example.id
   45 │   location            = var.location
   46 │   name                = "terragoat-app-service-${var.environment}${random_integer.rnd_int.result}"
@@ -2900,7 +2877,7 @@ See https://avd.aquasec.com/misconfig/azu-0002
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  terraform/azure/app_service.tf:22-41
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  22 ┌ resource azurerm_app_service "app-service1" {
+  22 ┌ resource "azurerm_app_service" "app-service1" {
   23 │   app_service_plan_id = azurerm_app_service_plan.example.id
   24 │   location            = var.location
   25 │   name                = "terragoat-app-service-${var.environment}${random_integer.rnd_int.result}"
@@ -2922,7 +2899,7 @@ See https://avd.aquasec.com/misconfig/azu-0002
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  terraform/azure/app_service.tf:43-63
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  43 ┌ resource azurerm_app_service "app-service2" {
+  43 ┌ resource "azurerm_app_service" "app-service2" {
   44 │   app_service_plan_id = azurerm_app_service_plan.example.id
   45 │   location            = var.location
   46 │   name                = "terragoat-app-service-${var.environment}${random_integer.rnd_int.result}"
@@ -2944,7 +2921,7 @@ See https://avd.aquasec.com/misconfig/azu-0003
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  terraform/azure/app_service.tf:22-41
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  22 ┌ resource azurerm_app_service "app-service1" {
+  22 ┌ resource "azurerm_app_service" "app-service1" {
   23 │   app_service_plan_id = azurerm_app_service_plan.example.id
   24 │   location            = var.location
   25 │   name                = "terragoat-app-service-${var.environment}${random_integer.rnd_int.result}"
@@ -2968,7 +2945,7 @@ See https://avd.aquasec.com/misconfig/azu-0003
    via terraform/azure/app_service.tf:50-52 (auth_settings)
     via terraform/azure/app_service.tf:43-63 (azurerm_app_service.app-service2)
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  43   resource azurerm_app_service "app-service2" {
+  43   resource "azurerm_app_service" "app-service2" {
   ..   
   51 [     enabled = false
   ..   
@@ -2986,7 +2963,7 @@ See https://avd.aquasec.com/misconfig/azu-0005
  terraform/azure/app_service.tf:28-30
    via terraform/azure/app_service.tf:22-41 (azurerm_app_service.app-service1)
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  22   resource azurerm_app_service "app-service1" {
+  22   resource "azurerm_app_service" "app-service1" {
   ..   
   28 ┌   site_config {
   29 │     min_tls_version = "1.1"
@@ -3005,7 +2982,7 @@ See https://avd.aquasec.com/misconfig/azu-0005
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  terraform/azure/app_service.tf:43-63
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  43 ┌ resource azurerm_app_service "app-service2" {
+  43 ┌ resource "azurerm_app_service" "app-service2" {
   44 │   app_service_plan_id = azurerm_app_service_plan.example.id
   45 │   location            = var.location
   46 │   name                = "terragoat-app-service-${var.environment}${random_integer.rnd_int.result}"
@@ -3029,7 +3006,7 @@ See https://avd.aquasec.com/misconfig/azu-0006
    via terraform/azure/app_service.tf:28-30 (site_config)
     via terraform/azure/app_service.tf:22-41 (azurerm_app_service.app-service1)
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  22   resource azurerm_app_service "app-service1" {
+  22   resource "azurerm_app_service" "app-service1" {
   ..   
   29 [     min_tls_version = "1.1"
   ..   
@@ -3047,7 +3024,7 @@ See https://avd.aquasec.com/misconfig/azu-0071
  terraform/azure/app_service.tf:28-30
    via terraform/azure/app_service.tf:22-41 (azurerm_app_service.app-service1)
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  22   resource azurerm_app_service "app-service1" {
+  22   resource "azurerm_app_service" "app-service1" {
   ..   
   28 ┌   site_config {
   29 │     min_tls_version = "1.1"
@@ -3067,7 +3044,7 @@ See https://avd.aquasec.com/misconfig/azu-0072
  terraform/azure/app_service.tf:27
    via terraform/azure/app_service.tf:22-41 (azurerm_app_service.app-service1)
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  22   resource azurerm_app_service "app-service1" {
+  22   resource "azurerm_app_service" "app-service1" {
   ..   
   27 [   https_only          = false
   ..   
@@ -3091,7 +3068,7 @@ See https://avd.aquasec.com/misconfig/azu-0039
  terraform/azure/instance.tf:17
    via terraform/azure/instance.tf:9-42 (azurerm_linux_virtual_machine.linux_machine)
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-   9   resource azurerm_linux_virtual_machine "linux_machine" {
+   9   resource "azurerm_linux_virtual_machine" "linux_machine" {
   ..   
   17 [   disable_password_authentication = false
   ..   
@@ -3242,7 +3219,7 @@ See https://avd.aquasec.com/misconfig/azu-0031
    via terraform/azure/logging.tf:6-9 (retention_policy)
     via terraform/azure/logging.tf:1-10 (azurerm_monitor_log_profile.logging_profile)
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-   1   resource azurerm_monitor_log_profile "logging_profile" {
+   1   resource "azurerm_monitor_log_profile" "logging_profile" {
    2     storage_account_id = azurerm_storage_account.example.id
    3     categories         = ["Action"]
    4     locations          = [var.location]
@@ -3264,7 +3241,7 @@ See https://avd.aquasec.com/misconfig/azu-0032
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  terraform/azure/logging.tf:1-10
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-   1 ┌ resource azurerm_monitor_log_profile "logging_profile" {
+   1 ┌ resource "azurerm_monitor_log_profile" "logging_profile" {
    2 │   storage_account_id = azurerm_storage_account.example.id
    3 │   categories         = ["Action"]
    4 │   locations          = [var.location]
@@ -3286,7 +3263,7 @@ See https://avd.aquasec.com/misconfig/azu-0033
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  terraform/azure/logging.tf:1-10
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-   1 ┌ resource azurerm_monitor_log_profile "logging_profile" {
+   1 ┌ resource "azurerm_monitor_log_profile" "logging_profile" {
    2 │   storage_account_id = azurerm_storage_account.example.id
    3 │   categories         = ["Action"]
    4 │   locations          = [var.location]
@@ -4059,7 +4036,7 @@ See https://avd.aquasec.com/misconfig/azu-0047
    via terraform/azure/networking.tf:74-84 (security_rule)
     via terraform/azure/networking.tf:69-107 (azurerm_network_security_group.bad_sg)
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  69   resource azurerm_network_security_group "bad_sg" {
+  69   resource "azurerm_network_security_group" "bad_sg" {
   ..   
   80 [     source_address_prefix      = "*"
  ...   
@@ -4078,7 +4055,7 @@ See https://avd.aquasec.com/misconfig/azu-0047
    via terraform/azure/networking.tf:86-96 (security_rule)
     via terraform/azure/networking.tf:69-107 (azurerm_network_security_group.bad_sg)
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  69   resource azurerm_network_security_group "bad_sg" {
+  69   resource "azurerm_network_security_group" "bad_sg" {
   ..   
   92 [     source_address_prefix      = "*"
  ...   
@@ -4098,7 +4075,7 @@ See https://avd.aquasec.com/misconfig/azu-0048
    via terraform/azure/networking.tf:86-96 (security_rule)
     via terraform/azure/networking.tf:69-107 (azurerm_network_security_group.bad_sg)
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  69   resource azurerm_network_security_group "bad_sg" {
+  69   resource "azurerm_network_security_group" "bad_sg" {
   ..   
   92 [     source_address_prefix      = "*"
  ...   
@@ -4121,7 +4098,7 @@ See https://avd.aquasec.com/misconfig/azu-0049
    via terraform/azure/networking.tf:131-134 (retention_policy)
     via terraform/azure/networking.tf:125-145 (azurerm_network_watcher_flow_log.flow_log)
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
- 125   resource azurerm_network_watcher_flow_log "flow_log" {
+ 125   resource "azurerm_network_watcher_flow_log" "flow_log" {
  ...   
  132 [     enabled = false
  ...   
@@ -4141,7 +4118,7 @@ See https://avd.aquasec.com/misconfig/azu-0050
    via terraform/azure/networking.tf:74-84 (security_rule)
     via terraform/azure/networking.tf:69-107 (azurerm_network_security_group.bad_sg)
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  69   resource azurerm_network_security_group "bad_sg" {
+  69   resource "azurerm_network_security_group" "bad_sg" {
   ..   
   80 [     source_address_prefix      = "*"
  ...   
@@ -4203,7 +4180,7 @@ See https://avd.aquasec.com/misconfig/azu-0073
  terraform/azure/networking.tf:126
    via terraform/azure/networking.tf:125-145 (azurerm_network_watcher_flow_log.flow_log)
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
- 125   resource azurerm_network_watcher_flow_log "flow_log" {
+ 125   resource "azurerm_network_watcher_flow_log" "flow_log" {
  126 [   enabled                   = false
  ...   
  145   }
@@ -4253,7 +4230,7 @@ See https://avd.aquasec.com/misconfig/azu-0044
  terraform/azure/security_center.tf:6
    via terraform/azure/security_center.tf:5-9 (azurerm_security_center_contact.contact)
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-   5   resource azurerm_security_center_contact "contact" {
+   5   resource "azurerm_security_center_contact" "contact" {
    6 [   alert_notifications = false
    7     alerts_to_admins    = false
    8     email               = "some@email.com"
@@ -4273,7 +4250,7 @@ See https://avd.aquasec.com/misconfig/azu-0045
  terraform/azure/security_center.tf:2
    via terraform/azure/security_center.tf:1-3 (azurerm_security_center_subscription_pricing.pricing)
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-   1   resource azurerm_security_center_subscription_pricing "pricing" {
+   1   resource "azurerm_security_center_subscription_pricing" "pricing" {
    2 [   tier = "Free"
    3   }
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -4290,7 +4267,7 @@ See https://avd.aquasec.com/misconfig/azu-0046
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  terraform/azure/security_center.tf:5-9
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-   5 ┌ resource azurerm_security_center_contact "contact" {
+   5 ┌ resource "azurerm_security_center_contact" "contact" {
    6 │   alert_notifications = false
    7 │   alerts_to_admins    = false
    8 │   email               = "some@email.com"
@@ -4310,7 +4287,7 @@ See https://avd.aquasec.com/misconfig/azu-0063
  terraform/azure/security_center.tf:6
    via terraform/azure/security_center.tf:5-9 (azurerm_security_center_contact.contact)
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-   5   resource azurerm_security_center_contact "contact" {
+   5   resource "azurerm_security_center_contact" "contact" {
    6 [   alert_notifications = false
    7     alerts_to_admins    = false
    8     email               = "some@email.com"
@@ -4330,7 +4307,7 @@ See https://avd.aquasec.com/misconfig/azu-0063
  terraform/azure/security_center.tf:7
    via terraform/azure/security_center.tf:5-9 (azurerm_security_center_contact.contact)
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-   5   resource azurerm_security_center_contact "contact" {
+   5   resource "azurerm_security_center_contact" "contact" {
    6     alert_notifications = false
    7 [   alerts_to_admins    = false
    8     email               = "some@email.com"
